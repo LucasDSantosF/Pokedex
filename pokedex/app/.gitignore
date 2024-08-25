@@ -1,1 +1,19 @@
 /build
+
+# Intellij
+*.iml
+.idea
+.idea/
+.idea/modules
+.idea/workspace.xml
+.idea/compiler.xml
+.idea/gradle.xml
+.idea/kotlinc.xml
+.idea/migrations.xml
+.idea/misc.xml
+.idea/deploymentTargetDropDown.xml
+.idea/appInsightsSettings.xml
+
+# Gradle files
+.gradle/
+build/
