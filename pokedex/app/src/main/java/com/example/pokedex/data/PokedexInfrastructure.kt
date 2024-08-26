@@ -13,8 +13,8 @@ class PokedexInfrastructure(
         return response.toDomain()
     }
 
-    override suspend fun getPokemon(id: Int): PokemonDetail {
-        val response = gateway.getPokemon(id = id)
+    override suspend fun getPokemon(name: String): PokemonDetail {
+        val response = gateway.getPokemon(name = name)
         return response.toDomain()
     }
 }

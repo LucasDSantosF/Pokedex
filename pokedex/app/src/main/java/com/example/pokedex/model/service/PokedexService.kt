@@ -6,5 +6,5 @@ import retrofit2.http.Query
 
 interface PokedexService {
     suspend fun getPokemonList(limit: Int = 20): PokemonList
-    suspend fun getPokemon(id: Int): PokemonDetail
+    suspend fun getPokemon(name: String): PokemonDetail
 }
