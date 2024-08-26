@@ -5,9 +5,13 @@ import com.example.pokedex.data.gateway.Gateway
 import com.example.pokedex.data.gatewayBuilder.RetrofitBuilder
 import com.example.pokedex.data.gatewayBuilder.RetrofitBuilder.buildGateway
 import com.example.pokedex.model.service.PokedexService
+import com.example.pokedex.ui.step.PokedexFlowModel
 import okhttp3.OkHttpClient
 import org.kodein.di.DI
 import org.kodein.di.bind
+import org.kodein.di.bindFactory
+import org.kodein.di.bindProvider
+import org.kodein.di.bindSingleton
 import org.kodein.di.instance
 import org.kodein.di.singleton
 import retrofit2.Retrofit
@@ -34,6 +38,12 @@ object AppInjection {
         bind<PokedexService>() with singleton {
             PokedexInfrastructure(
                 gateway = instance()
+            )
+        }
+
+         bindProvider{
+            PokedexFlowModel(
+                service = instance(),
             )
         }
     }
