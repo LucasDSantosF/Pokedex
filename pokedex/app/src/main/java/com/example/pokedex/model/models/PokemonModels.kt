@@ -17,8 +17,9 @@ data class Pokemon(
 
 
 data class PokemonDetail(
-    val id: Int,
+    val id: String,
     val name: String,
+    val number: String,
     val color: Color,
     val stats: List<PokemonStats>,
     val types: List<PokemonType>,

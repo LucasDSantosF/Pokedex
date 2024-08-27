@@ -55,8 +55,9 @@ data class PokemonDetailResponse(
         val color = types.firstOrNull()?.color ?: TypeColors.Unknown.color
 
         return PokemonDetail(
-            id = id,
+            id = id.toString(),
             name = name,
+            number = id.getNumber(),
             color = color,
             stats = stats.map { stat ->
                 PokemonStats(
@@ -137,6 +138,13 @@ private fun String.getColor() =
     (TypeColors.entries.firstOrNull { typeColors ->
         typeColors.id == this
     } ?: TypeColors.Unknown).color
+
+private fun Int.getNumber() =
+    when {
+        this < 10 -> "00$this"
+        this < 1000 -> "0$this"
+        else -> this.toString()
+    }
 
 private const val POKEMON_URL = "https://pokeapi.co/api/v2/pokemon/"
 private const val POKEMON_TYPE_URL = "https://pokeapi.co/api/v2/type/"

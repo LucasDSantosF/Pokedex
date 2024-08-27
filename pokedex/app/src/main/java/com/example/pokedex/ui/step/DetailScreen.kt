@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -227,13 +228,26 @@ data class DetailScreen(val id: String) : Screen {
     ) {
         Column {
             AsyncImage(
-                model = image(pokemon.id.toString()),
+                model = image(pokemon.id),
                 contentDescription = pokemon.name,
                 contentScale = ContentScale.FillBounds,
                 modifier = Modifier
                     .background(color = pokemon.color)
                     .height(350.dp)
                     .fillMaxWidth()
+            )
+            Text(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(color = pokemon.color)
+                    .offset(y = (-35).dp),
+                text = pokemon.number,
+                fontStyle = FontStyle.Normal,
+                fontFamily = FontFamily.SansSerif,
+                fontSize = TextUnit(value = 28f, type = TextUnitType.Sp),
+                fontWeight = FontWeight.ExtraBold,
+                textAlign = TextAlign.Center,
+                color = Color(red = 38, green = 0, blue = 65)
             )
             HorizontalDivider(
                 color = Color(red = 38, green = 0, blue = 65),

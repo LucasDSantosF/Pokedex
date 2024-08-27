@@ -14,8 +14,9 @@ data class PokedexState(
     val typeList: List<PokemonType> = emptyList(),
     val inputText: String = "",
     val details: PokemonDetail = PokemonDetail(
-        id = 0,
+        id = "",
         name = "",
+        number = "",
         color = Color.Gray,
         stats = emptyList(),
         types = emptyList(),
