@@ -10,7 +10,7 @@ data class PokemonList (
 
 data class Pokemon(
     val name: String,
-    val url: String,
+    val id: String,
 )
 
 
@@ -30,4 +30,9 @@ data class PokemonStats(
 data class PokemonStat(
     val name: String,
     val url: String,
+)
+
+data class PokemonType(
+    val name: String,
+    val id: String,
 )
