@@ -1,6 +1,8 @@
 package com.example.pokedex.ui.step
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -40,19 +42,25 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.kodein.rememberScreenModel
+import cafe.adriel.voyager.kodein.rememberNavigatorScreenModel
+import cafe.adriel.voyager.navigator.LocalNavigator
+import cafe.adriel.voyager.navigator.currentOrThrow
 import coil.compose.AsyncImage
 import com.example.pokedex.model.models.Pokemon
 import com.example.pokedex.model.models.PokemonType
 
 class ListScreen : Screen {
+
     @Composable
     override fun Content() {
-        val screenModel = rememberScreenModel<PokedexFlowModel>()
+        val navigator = LocalNavigator.currentOrThrow
+        val screenModel = navigator.rememberNavigatorScreenModel<PokedexFlowModel>()
         val state by screenModel.state.collectAsState()
 
         LaunchedEffect(key1 = screenModel) {
-            screenModel.getList()
+            state.selectedType?.let { id ->
+                screenModel.getPokemonByType(id)
+            } ?: screenModel.getList()
         }
 
         PokedexBody(
@@ -60,7 +68,13 @@ class ListScreen : Screen {
             image = remember { { id -> screenModel.getImageURL(id) } },
             onValueChange = remember { { inputText -> screenModel.updateInputText(inputText) } },
             onClickAction = remember { { screenModel.getPokemonByNameOrId() } },
-            onClickBadge = remember { { id -> screenModel.getPokemonByType(id) } }
+            onClickBadge = remember {
+                { id ->
+                    screenModel.updateSelectedType(id)
+                    screenModel.getPokemonByType(id)
+                }
+            },
+            onClickToDetail = remember { { id -> navigator.push(DetailScreen(id)) } }
         )
     }
 
@@ -71,7 +85,8 @@ class ListScreen : Screen {
         image: (String) -> String,
         onClickAction: () -> Unit,
         onValueChange: (String) -> Unit,
-        onClickBadge: (String) -> Unit
+        onClickBadge: (String) -> Unit,
+        onClickToDetail: (String) -> Unit
     ) {
         Column(
             modifier = Modifier
@@ -82,6 +97,7 @@ class ListScreen : Screen {
             SearchInputAndTypesBadges(
                 inputText = state.inputText,
                 types = state.typeList,
+                selectedType = state.selectedType,
                 onValueChange = onValueChange,
                 onClickAction = onClickAction,
                 onClickBadge = onClickBadge,
@@ -91,6 +107,7 @@ class ListScreen : Screen {
                     PokemonCard(
                         pokemon = pokemon,
                         image = image,
+                        onClickToDetail = onClickToDetail,
                     )
                 }
             }
@@ -99,7 +116,11 @@ class ListScreen : Screen {
 
 
     @Composable
-    private fun PokemonCard(pokemon: Pokemon, image: (String) -> String) {
+    private fun PokemonCard(
+        pokemon: Pokemon,
+        image: (String) -> String,
+        onClickToDetail: (String) -> Unit
+    ) {
         Column(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -107,9 +128,7 @@ class ListScreen : Screen {
             Card(
                 modifier = Modifier
                     .padding(20.dp)
-                    .clickable {
-
-                    }
+                    .clickable { onClickToDetail(pokemon.id) }
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     AsyncImage(
@@ -139,6 +158,7 @@ class ListScreen : Screen {
     private fun SearchInputAndTypesBadges(
         inputText: String,
         types: List<PokemonType>,
+        selectedType: String?,
         onClickAction: () -> Unit,
         onValueChange: (String) -> Unit,
         onClickBadge: (String) -> Unit
@@ -186,6 +206,7 @@ class ListScreen : Screen {
                     TypeBadge(
                         type = type,
                         onClickBadge = onClickBadge,
+                        selectedType = selectedType,
                     )
                 }
             }
@@ -195,15 +216,25 @@ class ListScreen : Screen {
     @Composable
     private fun TypeBadge(
         type: PokemonType,
+        selectedType: String?,
         onClickBadge: (String) -> Unit
     ) {
         Badge(
             Modifier
                 .padding(vertical = 16.dp, horizontal = 12.dp)
                 .clip(RoundedCornerShape(124.dp))
-                .clickable { onClickBadge(type.id) },
-            containerColor = Color(red = 240, green = 240, blue = 240),
-            contentColor = Color(red = 240, green = 240, blue = 240),
+                .clickable { onClickBadge(type.id) }
+                .conditional(selectedType == type.id) {
+                    border(
+                        border = BorderStroke(
+                            width = 2.dp,
+                            color = Color(red = 38, green = 0, blue = 65)
+                        ),
+                        shape = RoundedCornerShape(124.dp)
+                    )
+                },
+            containerColor = type.color,
+            contentColor = type.color,
             content = {
                 Text(
                     modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
@@ -212,7 +243,7 @@ class ListScreen : Screen {
                     fontFamily = FontFamily.SansSerif,
                     fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
                     fontWeight = FontWeight.ExtraBold,
-                    color = Color(red = 160, green = 160, blue = 160)
+                    color = Color.White
                 )
             }
         )
@@ -238,6 +269,17 @@ class ListScreen : Screen {
                 fontWeight = FontWeight.ExtraBold,
                 color = Color(red = 160, green = 160, blue = 160)
             )
+        }
+    }
+
+    private fun Modifier.conditional(
+        condition: Boolean,
+        modifier: Modifier.() -> Modifier
+    ): Modifier {
+        return if (condition) {
+            then(modifier(Modifier))
+        } else {
+            this
         }
     }
 }
