@@ -1,5 +1,7 @@
 package com.example.pokedex.model.models
 
+import androidx.compose.ui.graphics.Color
+
 data class PokemonList (
     val count: Int,
     val previous: String?,
@@ -18,6 +20,7 @@ data class PokemonDetail(
     val id: Int,
     val name: String,
     val stats: List<PokemonStats>,
+    val types: List<PokemonType>,
 )
 
 
@@ -35,4 +38,5 @@ data class PokemonStat(
 data class PokemonType(
     val name: String,
     val id: String,
+    val color: Color,
 )

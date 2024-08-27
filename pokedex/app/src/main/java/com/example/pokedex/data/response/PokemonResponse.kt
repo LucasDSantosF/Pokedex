@@ -6,6 +6,7 @@ import com.example.pokedex.model.models.PokemonList
 import com.example.pokedex.model.models.PokemonStat
 import com.example.pokedex.model.models.PokemonStats
 import com.example.pokedex.model.models.PokemonType
+import com.example.pokedex.model.models.TypeColors
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -40,6 +41,7 @@ data class PokemonDetailResponse(
     val id: Int,
     val name: String,
     val stats: List<PokemonStatsResponse>,
+    val types: List<PokemonTypeSlotResponse>,
 ) {
     fun toDomain() = PokemonDetail(
         id = id,
@@ -51,6 +53,14 @@ data class PokemonDetailResponse(
                     name = stat.stat.name,
                     url = stat.stat.url,
                 ),
+            )
+        },
+        types = types.map { typeSlot ->
+            val id = typeSlot.type.url.getId(POKEMON_TYPE_URL)
+            PokemonType(
+                name = typeSlot.type.name,
+                id = id,
+                color = id.getColor()
             )
         },
     )
@@ -76,13 +86,19 @@ data class PokemonTypeListResponse(
     val results: List<PokemonTypeResponse>
 ) {
     fun toDomain() = results.map { type ->
+        val id = type.url.getId(POKEMON_TYPE_URL)
         PokemonType(
             name = type.name,
-            id = type.url.getId(POKEMON_TYPE_URL),
+            id = id,
+            color = id.getColor()
         )
     }
-
 }
+
+@Serializable
+data class PokemonTypeSlotResponse(
+    val type: PokemonTypeResponse,
+)
 
 @Serializable
 data class PokemonTypeResponse(
@@ -110,6 +126,11 @@ data class PokemonSlot(
 private fun String.getId(oldValue: String) =
     this.replace(oldValue = oldValue, newValue = "")
         .replace("/", "")
+
+private fun String.getColor() =
+    (TypeColors.entries.firstOrNull { typeColors ->
+        typeColors.id == this
+    } ?: TypeColors.Unknown).color
 
 private const val POKEMON_URL = "https://pokeapi.co/api/v2/pokemon/"
 private const val POKEMON_TYPE_URL = "https://pokeapi.co/api/v2/type/"
