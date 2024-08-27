@@ -43,27 +43,33 @@ data class PokemonDetailResponse(
     val stats: List<PokemonStatsResponse>,
     val types: List<PokemonTypeSlotResponse>,
 ) {
-    fun toDomain() = PokemonDetail(
-        id = id,
-        name = name,
-        stats = stats.map { stat ->
-            PokemonStats(
-                baseStat = stat.baseStat,
-                stat = PokemonStat(
-                    name = stat.stat.name,
-                    url = stat.stat.url,
-                ),
-            )
-        },
-        types = types.map { typeSlot ->
+    fun toDomain(): PokemonDetail {
+        val types = types.map { typeSlot ->
             val id = typeSlot.type.url.getId(POKEMON_TYPE_URL)
             PokemonType(
                 name = typeSlot.type.name,
                 id = id,
                 color = id.getColor()
             )
-        },
-    )
+        }
+        val color = types.firstOrNull()?.color ?: TypeColors.Unknown.color
+
+        return PokemonDetail(
+            id = id,
+            name = name,
+            color = color,
+            stats = stats.map { stat ->
+                PokemonStats(
+                    baseStat = stat.baseStat.toString(),
+                    stat = PokemonStat(
+                        name = stat.stat.name,
+                        url = stat.stat.url,
+                    ),
+                )
+            },
+            types = types,
+        )
+    }
 }
 
 @Serializable

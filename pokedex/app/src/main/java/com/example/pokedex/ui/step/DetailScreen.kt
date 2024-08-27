@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -47,8 +48,11 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import coil.compose.AsyncImage
 import com.example.pokedex.model.models.PokemonDetail
+import com.example.pokedex.model.models.PokemonStats
 import com.example.pokedex.model.models.PokemonType
 import com.example.pokedex.model.models.TypeColors
+import com.example.pokedex.ui.PokedexDetailStrings
+import com.example.pokedex.ui.PokedexStrings
 
 data class DetailScreen(val id: String) : Screen {
     @Composable
@@ -56,6 +60,7 @@ data class DetailScreen(val id: String) : Screen {
         val navigator = LocalNavigator.currentOrThrow
         val screenModel = navigator.rememberNavigatorScreenModel<PokedexFlowModel>()
         val state by screenModel.state.collectAsState()
+        val strings = remember { PokedexStrings().details }
 
         LaunchedEffect(key1 = screenModel) {
             screenModel.getDetail(id)
@@ -64,6 +69,7 @@ data class DetailScreen(val id: String) : Screen {
         Column {
             PokemonDetailBody(
                 pokemon = state.details,
+                strings = strings,
                 image = remember { { id -> screenModel.getImageURL(id) } },
                 backAction = remember { { navigator.pop() } },
                 onClickBadge = remember { { id ->
@@ -78,16 +84,15 @@ data class DetailScreen(val id: String) : Screen {
     @Composable
     private fun ColumnScope.PokemonDetailBody(
         pokemon: PokemonDetail,
+        strings: PokedexDetailStrings,
         image: (String) -> String,
         backAction: () -> Unit,
         onClickBadge: (String) -> Unit
     ) {
-        val color = pokemon.types.firstOrNull()?.color ?: TypeColors.Unknown.color
-
         Toolbar(
             name = pokemon.name,
             backAction = backAction,
-            backGroundColor = color,
+            backGroundColor = pokemon.color,
         )
         HorizontalDivider(color = Color(red = 38, green = 0, blue = 65), thickness = 2.dp)
         Column(
@@ -98,86 +103,142 @@ data class DetailScreen(val id: String) : Screen {
         ) {
             LazyColumn {
                 item {
-                    AsyncImage(
-                        model = image(pokemon.id.toString()),
-                        contentDescription = pokemon.name,
-                        contentScale = ContentScale.FillBounds,
-                        modifier = Modifier
-                            .background(color = color)
-                            .height(350.dp)
-                            .fillMaxWidth()
+                    PokemonImage(
+                        pokemon = pokemon,
+                        image = image,
                     )
-                    HorizontalDivider(
-                        color = Color(red = 38, green = 0, blue = 65),
-                        thickness = 2.dp
+                    PokemonInfo(
+                        pokemon = pokemon,
+                        strings = strings,
+                        onClickBadge = onClickBadge,
                     )
+                }
+            }
+        }
+    }
+
+    @Composable
+    private fun PokemonInfo(
+        pokemon: PokemonDetail,
+        strings: PokedexDetailStrings,
+        onClickBadge: (String) -> Unit,
+    ) {
+        Column {
+            Spacer(modifier = Modifier.padding(10.dp))
+            PokemonTypeRow(
+                pokemon = pokemon,
+                strings = strings,
+                onClickBadge = onClickBadge,
+            )
+
+            Text(
+                text = strings.statLabel,
+                fontStyle = FontStyle.Normal,
+                fontFamily = FontFamily.SansSerif,
+                fontSize = TextUnit(value = 28f, type = TextUnitType.Sp),
+                fontWeight = FontWeight.ExtraBold,
+                color = Color(red = 38, green = 0, blue = 65),
+                modifier = Modifier
+                    .padding(horizontal = 20.dp)
+                    .fillMaxWidth(),
+            )
+            Column(modifier = Modifier.padding(20.dp)) {
+                pokemon.stats.forEachIndexed { index, stat ->
+                    if (index != 0)
+                        HorizontalDivider(
+                            color = Color(red = 38, green = 0, blue = 65),
+                            thickness = 2.dp
+                        )
+                    PokemonStatsRow(stat = stat)
+                }
+            }
+        }
+    }
+
+    @Composable
+    private fun PokemonStatsRow(
+        stat: PokemonStats,
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = stat.stat.name,
+                fontStyle = FontStyle.Normal,
+                fontFamily = FontFamily.SansSerif,
+                fontSize = TextUnit(value = 24f, type = TextUnitType.Sp),
+                fontWeight = FontWeight.ExtraBold,
+                color = Color(red = 160, green = 160, blue = 160)
+            )
+
+            Text(
+                text = stat.baseStat,
+                fontStyle = FontStyle.Normal,
+                fontFamily = FontFamily.SansSerif,
+                fontSize = TextUnit(value = 24f, type = TextUnitType.Sp),
+                fontWeight = FontWeight.ExtraBold,
+                textAlign = TextAlign.End,
+                color = Color(red = 100, green = 100, blue = 100)
+            )
+        }
+    }
+
+    @Composable
+    private fun PokemonTypeRow(
+        pokemon: PokemonDetail,
+        strings: PokedexDetailStrings,
+        onClickBadge: (String) -> Unit,
+    ) {
+        Column {
+            Text(
+                text = strings.typeLabel,
+                fontStyle = FontStyle.Normal,
+                fontFamily = FontFamily.SansSerif,
+                fontSize = TextUnit(value = 28f, type = TextUnitType.Sp),
+                fontWeight = FontWeight.ExtraBold,
+                color = Color(red = 38, green = 0, blue = 65),
+                modifier = Modifier
+                    .padding(horizontal = 20.dp)
+                    .fillMaxWidth(),
+            )
+            LazyRow(
+                modifier = Modifier.padding(horizontal = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                items(items = pokemon.types) { type ->
                     Column(modifier = Modifier.padding(20.dp)) {
-                        Text(
-                            text = "Tipos",
-                            fontStyle = FontStyle.Normal,
-                            fontFamily = FontFamily.SansSerif,
-                            fontSize = TextUnit(value = 28f, type = TextUnitType.Sp),
-                            fontWeight = FontWeight.ExtraBold,
-                            color = Color(red = 38, green = 0, blue = 65),
-                            modifier = Modifier.fillMaxWidth(),
+                        TypeBadge(
+                            type = type,
+                            onClickBadge = onClickBadge,
                         )
-                        LazyRow(
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            items(items = pokemon.types) { type ->
-                                TypeBadge(
-                                    type = type,
-                                    onClickBadge = onClickBadge,
-                                )
-                            }
-                        }
-                        Text(
-                            text = "Estatísticas",
-                            fontStyle = FontStyle.Normal,
-                            fontFamily = FontFamily.SansSerif,
-                            fontSize = TextUnit(value = 28f, type = TextUnitType.Sp),
-                            fontWeight = FontWeight.ExtraBold,
-                            color = Color(red = 38, green = 0, blue = 65),
-                            modifier = Modifier
-                                .padding(vertical = 16.dp)
-                                .fillMaxWidth(),
-                        )
-                        pokemon.stats.forEachIndexed { index, stat ->
-                            if (index != 0)
-                                HorizontalDivider(
-                                    color = Color(red = 38, green = 0, blue = 65),
-                                    thickness = 2.dp
-                                )
-
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 12.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text(
-                                    text = stat.stat.name,
-                                    fontStyle = FontStyle.Normal,
-                                    fontFamily = FontFamily.SansSerif,
-                                    fontSize = TextUnit(value = 24f, type = TextUnitType.Sp),
-                                    fontWeight = FontWeight.ExtraBold,
-                                    color = Color(red = 160, green = 160, blue = 160)
-                                )
-
-                                Text(
-                                    text = stat.baseStat.toString(),
-                                    fontStyle = FontStyle.Normal,
-                                    fontFamily = FontFamily.SansSerif,
-                                    fontSize = TextUnit(value = 24f, type = TextUnitType.Sp),
-                                    fontWeight = FontWeight.ExtraBold,
-                                    textAlign = TextAlign.End,
-                                    color = Color(red = 100, green = 100, blue = 100)
-                                )
-                            }
-                        }
                     }
                 }
             }
+        }
+    }
+
+    @Composable
+    private fun PokemonImage(
+        pokemon: PokemonDetail,
+        image: (String) -> String,
+    ) {
+        Column {
+            AsyncImage(
+                model = image(pokemon.id.toString()),
+                contentDescription = pokemon.name,
+                contentScale = ContentScale.FillBounds,
+                modifier = Modifier
+                    .background(color = pokemon.color)
+                    .height(350.dp)
+                    .fillMaxWidth()
+            )
+            HorizontalDivider(
+                color = Color(red = 38, green = 0, blue = 65),
+                thickness = 2.dp
+            )
         }
     }
 
@@ -188,7 +249,6 @@ data class DetailScreen(val id: String) : Screen {
     ) {
         Badge(
             modifier = Modifier
-                .padding(vertical = 16.dp)
                 .clip(RoundedCornerShape(124.dp))
                 .clickable { onClickBadge(type.id) },
             containerColor = type.color,

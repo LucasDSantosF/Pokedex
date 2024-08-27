@@ -19,13 +19,14 @@ data class Pokemon(
 data class PokemonDetail(
     val id: Int,
     val name: String,
+    val color: Color,
     val stats: List<PokemonStats>,
     val types: List<PokemonType>,
 )
 
 
 data class PokemonStats(
-    val baseStat: Int,
+    val baseStat: String,
     val stat: PokemonStat
 )
 

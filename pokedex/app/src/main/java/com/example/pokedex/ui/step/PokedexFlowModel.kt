@@ -1,5 +1,6 @@
 package com.example.pokedex.ui.step
 
+import androidx.compose.ui.graphics.Color
 import cafe.adriel.voyager.core.model.StateScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import com.example.pokedex.model.models.Pokemon
@@ -15,6 +16,7 @@ data class PokedexState(
     val details: PokemonDetail = PokemonDetail(
         id = 0,
         name = "",
+        color = Color.Gray,
         stats = emptyList(),
         types = emptyList(),
     ),

@@ -48,6 +48,8 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import coil.compose.AsyncImage
 import com.example.pokedex.model.models.Pokemon
 import com.example.pokedex.model.models.PokemonType
+import com.example.pokedex.ui.PokedexListStrings
+import com.example.pokedex.ui.PokedexStrings
 
 class ListScreen : Screen {
 
@@ -56,6 +58,7 @@ class ListScreen : Screen {
         val navigator = LocalNavigator.currentOrThrow
         val screenModel = navigator.rememberNavigatorScreenModel<PokedexFlowModel>()
         val state by screenModel.state.collectAsState()
+        val strings = remember { PokedexStrings().list }
 
         LaunchedEffect(key1 = screenModel) {
             state.selectedType?.let { id ->
@@ -65,6 +68,7 @@ class ListScreen : Screen {
 
         PokedexBody(
             state = state,
+            strings = strings,
             image = remember { { id -> screenModel.getImageURL(id) } },
             onValueChange = remember { { inputText -> screenModel.updateInputText(inputText) } },
             onClickAction = remember { { screenModel.getPokemonByNameOrId() } },
@@ -83,6 +87,7 @@ class ListScreen : Screen {
     private fun PokedexBody(
         state: PokedexState,
         image: (String) -> String,
+        strings: PokedexListStrings,
         onClickAction: () -> Unit,
         onValueChange: (String) -> Unit,
         onClickBadge: (String) -> Unit,
@@ -93,10 +98,11 @@ class ListScreen : Screen {
                 .fillMaxSize()
                 .background(color = Color(red = 255, green = 250, blue = 250))
         ) {
-            Header()
+            Header(strings)
             SearchInputAndTypesBadges(
                 inputText = state.inputText,
                 types = state.typeList,
+                strings = strings,
                 selectedType = state.selectedType,
                 onValueChange = onValueChange,
                 onClickAction = onClickAction,
@@ -153,10 +159,10 @@ class ListScreen : Screen {
         }
     }
 
-    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     private fun SearchInputAndTypesBadges(
         inputText: String,
+        strings: PokedexListStrings,
         types: List<PokemonType>,
         selectedType: String?,
         onClickAction: () -> Unit,
@@ -168,38 +174,11 @@ class ListScreen : Screen {
                 .fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            TextField(
-                modifier = Modifier
-                    .padding(horizontal = 20.dp)
-                    .fillMaxWidth(),
-                value = inputText,
+            SearchPokemonInput(
+                inputText = inputText,
+                strings = strings,
+                onClickAction = onClickAction,
                 onValueChange = onValueChange,
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Outlined.Search,
-                        contentDescription = null,
-                        tint = Color(red = 38, green = 0, blue = 65),
-                    )
-                },
-                keyboardActions = KeyboardActions(
-                    onDone = { onClickAction() },
-                ),
-                placeholder = {
-                    Text(
-                        text = "nome ou numero",
-                        fontStyle = FontStyle.Normal,
-                        fontFamily = FontFamily.SansSerif,
-                        fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
-                        fontWeight = FontWeight.ExtraBold,
-                        color = Color(red = 160, green = 160, blue = 160)
-                    )
-                },
-                colors = TextFieldDefaults.textFieldColors(
-                    containerColor = Color(red = 240, green = 240, blue = 240),
-                    focusedIndicatorColor = Color(red = 240, green = 240, blue = 240),
-                    unfocusedIndicatorColor = Color(red = 240, green = 240, blue = 240),
-                ),
-                singleLine = true,
             )
             LazyRow(modifier = Modifier.padding(horizontal = 4.dp)) {
                 items(items = types) { type ->
@@ -211,6 +190,49 @@ class ListScreen : Screen {
                 }
             }
         }
+    }
+
+    @Composable
+    @OptIn(ExperimentalMaterial3Api::class)
+    private fun SearchPokemonInput(
+        inputText: String,
+        strings: PokedexListStrings,
+        onClickAction: () -> Unit,
+        onValueChange: (String) -> Unit,
+    ) {
+        TextField(
+            modifier = Modifier
+                .padding(horizontal = 20.dp)
+                .fillMaxWidth(),
+            value = inputText,
+            onValueChange = onValueChange,
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Outlined.Search,
+                    contentDescription = null,
+                    tint = Color(red = 38, green = 0, blue = 65),
+                )
+            },
+            keyboardActions = KeyboardActions(
+                onDone = { onClickAction() },
+            ),
+            placeholder = {
+                Text(
+                    text = strings.placeholder,
+                    fontStyle = FontStyle.Normal,
+                    fontFamily = FontFamily.SansSerif,
+                    fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
+                    fontWeight = FontWeight.ExtraBold,
+                    color = Color(red = 160, green = 160, blue = 160)
+                )
+            },
+            colors = TextFieldDefaults.textFieldColors(
+                containerColor = Color(red = 240, green = 240, blue = 240),
+                focusedIndicatorColor = Color(red = 240, green = 240, blue = 240),
+                unfocusedIndicatorColor = Color(red = 240, green = 240, blue = 240),
+            ),
+            singleLine = true,
+        )
     }
 
     @Composable
@@ -250,10 +272,10 @@ class ListScreen : Screen {
     }
 
     @Composable
-    private fun Header() {
+    private fun Header(strings: PokedexListStrings) {
         Column(Modifier.padding(20.dp)) {
             Text(
-                text = "Pokédex",
+                text = strings.title,
                 fontStyle = FontStyle.Normal,
                 fontFamily = FontFamily.SansSerif,
                 fontSize = TextUnit(value = 40f, type = TextUnitType.Sp),
@@ -262,7 +284,7 @@ class ListScreen : Screen {
             )
 
             Text(
-                text = "Procure seu Pokemon",
+                text = strings.description,
                 fontStyle = FontStyle.Normal,
                 fontFamily = FontFamily.SansSerif,
                 fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
