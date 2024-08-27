@@ -142,7 +142,7 @@ private fun String.getColor() =
 private fun Int.getNumber() =
     when {
         this < 10 -> "00$this"
-        this < 1000 -> "0$this"
+        this < 100 -> "0$this"
         else -> this.toString()
     }
 
