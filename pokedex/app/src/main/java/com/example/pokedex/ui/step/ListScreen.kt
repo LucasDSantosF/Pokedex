@@ -53,6 +53,7 @@ import com.example.pokedex.model.models.Pokemon
 import com.example.pokedex.model.models.PokemonType
 import com.example.pokedex.ui.PokedexListStrings
 import com.example.pokedex.ui.PokedexStrings
+import com.example.pokedex.ui.step.components.EmptyScreen
 import com.example.pokedex.ui.util.EndlessLazyColumn
 
 class ListScreen : Screen {
@@ -62,7 +63,7 @@ class ListScreen : Screen {
         val navigator = LocalNavigator.currentOrThrow
         val screenModel = navigator.rememberNavigatorScreenModel<PokedexFlowModel>()
         val state by screenModel.state.collectAsState()
-        val strings = remember { PokedexStrings().list }
+        val strings = remember { PokedexStrings() }
 
         LaunchedEffect(key1 = screenModel) {
             state.selectedType?.let { id ->
@@ -84,6 +85,7 @@ class ListScreen : Screen {
             },
             onClickToDetail = remember { { id -> navigator.push(DetailScreen(id)) } },
             loadMore = remember { { screenModel.loadMoreList() } },
+            onClick = remember { { screenModel.reloadAction() } }
         )
     }
 
@@ -92,40 +94,51 @@ class ListScreen : Screen {
     private fun PokedexBody(
         state: PokedexState,
         image: (String) -> String,
-        strings: PokedexListStrings,
+        strings: PokedexStrings,
         onClickAction: () -> Unit,
+        onClick: () -> Unit,
         onValueChange: (String) -> Unit,
         onClickBadge: (String) -> Unit,
         onClickToDetail: (String) -> Unit,
         loadMore: () -> Unit,
     ) {
+        val msg = state.errorMsg
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .background(color = Color(red = 255, green = 250, blue = 250))
         ) {
-            Header(strings)
+            Header(strings.list)
             SearchInputAndTypesBadges(
                 inputText = state.inputText,
                 types = state.typeList,
-                strings = strings,
+                strings = strings.list,
                 selectedType = state.selectedType,
                 onValueChange = onValueChange,
                 onClickAction = onClickAction,
                 onClickBadge = onClickBadge,
             )
-            EndlessLazyColumn(
-                items = state.list,
-                itemKey = { pokemon ->  pokemon.id },
-                itemContent = { pokemon ->
-                    PokemonCard(
-                        pokemon = pokemon,
-                        image = image,
-                        onClickToDetail = onClickToDetail,
-                    )
-                },
-                loadMore = loadMore,
-            )
+            if (msg != null)
+                EmptyScreen(
+                    msg = msg,
+                    strings = strings,
+                    image = image,
+                    onClickAction = onClick,
+                )
+            else
+                EndlessLazyColumn(
+                    items = state.list,
+                    itemKey = { pokemon -> pokemon.id },
+                    itemContent = { pokemon ->
+                        PokemonCard(
+                            pokemon = pokemon,
+                            image = image,
+                            onClickToDetail = onClickToDetail,
+                        )
+                    },
+                    loadMore = loadMore,
+                )
         }
     }
 

@@ -3,6 +3,7 @@ package com.example.pokedex.ui.step
 import androidx.compose.ui.graphics.Color
 import cafe.adriel.voyager.core.model.StateScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
+import com.example.pokedex.model.models.ActionsType
 import com.example.pokedex.model.models.Pokemon
 import com.example.pokedex.model.models.PokemonDetail
 import com.example.pokedex.model.models.PokemonType
@@ -25,12 +26,13 @@ data class PokedexState(
     val selectedType: String? = null,
     val limit: Int = 20,
     val errorMsg: String? = null,
+    val actionsType: ActionsType = ActionsType.LoadList,
 )
 
 class PokedexFlowModel(
     private val service: PokedexService,
-    private val strings: PokedexStrings,
 ) : StateScreenModel<PokedexState>(PokedexState()) {
+    private val strings = PokedexStrings()
 
     fun getList() {
         screenModelScope.launch {
@@ -42,10 +44,12 @@ class PokedexFlowModel(
                 mutableState.value = state.value.copy(
                     list = pokemonList.results,
                     typeList = typeList,
+                    errorMsg = null,
                 )
             }.onFailure {
                 mutableState.value = state.value.copy(
                     errorMsg = strings.errorMsg,
+                    actionsType = ActionsType.LoadList,
                 )
             }
         }
@@ -56,15 +60,19 @@ class PokedexFlowModel(
             runCatching {
                 service.getPokemon(mutableState.value.inputText)
             }.onSuccess { result ->
-                mutableState.value = state.value.copy(list = listOf(
-                    Pokemon(
-                        name = result.name,
-                        id = result.id
-                    )
-                ))
+                mutableState.value = state.value.copy(
+                    list = listOf(
+                        Pokemon(
+                            name = result.name,
+                            id = result.id,
+                        )
+                    ),
+                    errorMsg = null,
+                )
             }.onFailure {
                 mutableState.value = state.value.copy(
                     errorMsg = strings.errorMsg,
+                    actionsType = ActionsType.ByNameOrId
                 )
             }
         }
@@ -79,12 +87,13 @@ class PokedexFlowModel(
             runCatching {
                 service.getPokemonListByType(id)
             }.onSuccess { result ->
-                mutableState.value = state.value.copy(list = result)
+                mutableState.value = state.value.copy(list = result, errorMsg = null)
             }.onFailure {
-                    mutableState.value = state.value.copy(
-                        errorMsg = strings.errorMsg,
-                    )
-                }
+                mutableState.value = state.value.copy(
+                    errorMsg = strings.errorMsg,
+                    actionsType = ActionsType.ByType(id),
+                )
+            }
         }
     }
 
@@ -95,10 +104,12 @@ class PokedexFlowModel(
             }.onSuccess { pokemon ->
                 mutableState.value = state.value.copy(
                     details = pokemon,
+                    errorMsg = null,
                 )
             }.onFailure {
                 mutableState.value = state.value.copy(
                     errorMsg = strings.errorMsg,
+                    actionsType = ActionsType.LoadDetail(id),
                 )
             }
         }
@@ -114,7 +125,7 @@ class PokedexFlowModel(
 
     fun loadMoreList() {
         screenModelScope.launch {
-            val limit = mutableState.value.limit+20
+            val limit = mutableState.value.limit + 20
             runCatching {
                 service.getPokemonList(limit) to service.getPokemonTypeList()
             }.onSuccess { result ->
@@ -124,12 +135,33 @@ class PokedexFlowModel(
                     list = pokemonList.results,
                     typeList = typeList,
                     limit = limit,
+                    errorMsg = null,
                 )
             }.onFailure {
                 mutableState.value = state.value.copy(
                     errorMsg = strings.errorMsg,
+                    actionsType = ActionsType.LoadMoreList,
                 )
             }
+        }
+    }
+
+    fun reloadAction() {
+        when (val action = mutableState.value.actionsType) {
+            ActionsType.ByNameOrId ->
+                getPokemonByNameOrId()
+
+            is ActionsType.ByType ->
+                getPokemonByType(action.id)
+
+            is ActionsType.LoadDetail ->
+                getDetail(action.id)
+
+            ActionsType.LoadList ->
+                getList()
+
+            ActionsType.LoadMoreList ->
+                loadMoreList()
         }
     }
 
@@ -140,7 +172,9 @@ class PokedexFlowModel(
         "$IMAGE_HOME_URL$id.png"
 
     private companion object {
-        const val IMAGE_URL = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/"
-        const val IMAGE_HOME_URL = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/"
+        const val IMAGE_URL =
+            "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/"
+        const val IMAGE_HOME_URL =
+            "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/"
     }
 }

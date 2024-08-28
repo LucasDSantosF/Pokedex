@@ -44,7 +44,6 @@ object AppInjection {
          bindProvider{
             PokedexFlowModel(
                 service = instance(),
-                strings = instance(),
             )
         }
     }

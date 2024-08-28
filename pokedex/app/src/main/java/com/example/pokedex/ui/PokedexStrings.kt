@@ -4,6 +4,7 @@ data class PokedexStrings(
     val list: PokedexListStrings = PokedexListStrings(),
     val details: PokedexDetailStrings = PokedexDetailStrings(),
     val errorMsg: String = "Ops.. Algo de errado tente novamente",
+    val tryAgain: String = "Tentar novamente",
 )
 
 data class PokedexListStrings(

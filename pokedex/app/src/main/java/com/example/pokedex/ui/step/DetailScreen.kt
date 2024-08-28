@@ -56,6 +56,7 @@ import com.example.pokedex.model.models.PokemonType
 import com.example.pokedex.model.models.TypeColors
 import com.example.pokedex.ui.PokedexDetailStrings
 import com.example.pokedex.ui.PokedexStrings
+import com.example.pokedex.ui.step.components.EmptyScreen
 
 data class DetailScreen(val id: String) : Screen {
     @Composable
@@ -63,7 +64,7 @@ data class DetailScreen(val id: String) : Screen {
         val navigator = LocalNavigator.currentOrThrow
         val screenModel = navigator.rememberNavigatorScreenModel<PokedexFlowModel>()
         val state by screenModel.state.collectAsState()
-        val strings = remember { PokedexStrings().details }
+        val strings = remember { PokedexStrings() }
 
         LaunchedEffect(key1 = screenModel) {
             screenModel.getDetail(id)
@@ -73,14 +74,18 @@ data class DetailScreen(val id: String) : Screen {
             PokemonDetailBody(
                 pokemon = state.details,
                 strings = strings,
+                msg = state.errorMsg,
                 image = remember { { id -> screenModel.getImageURL(id) } },
                 imageHome = remember { { id -> screenModel.getImageHomeURL(id) } },
                 backAction = remember { { navigator.pop() } },
-                onClickBadge = remember { { id ->
-                    screenModel.updateSelectedType(id, true)
-                    screenModel.getPokemonByType(id)
-                    navigator.pop()
-                } }
+                onClickBadge = remember {
+                    { id ->
+                        screenModel.updateSelectedType(id, true)
+                        screenModel.getPokemonByType(id)
+                        navigator.pop()
+                    }
+                },
+                onClick = remember { { screenModel.reloadAction() } },
             )
         }
     }
@@ -88,10 +93,12 @@ data class DetailScreen(val id: String) : Screen {
     @Composable
     private fun ColumnScope.PokemonDetailBody(
         pokemon: PokemonDetail,
-        strings: PokedexDetailStrings,
+        msg: String?,
+        strings: PokedexStrings,
         image: (String) -> String,
         imageHome: (String) -> String,
         backAction: () -> Unit,
+        onClick: () -> Unit,
         onClickBadge: (String) -> Unit
     ) {
         Toolbar(
@@ -100,27 +107,35 @@ data class DetailScreen(val id: String) : Screen {
             backGroundColor = pokemon.color,
         )
         HorizontalDivider(color = Color(red = 38, green = 0, blue = 65), thickness = 2.dp)
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(color = Color(red = 255, green = 250, blue = 250))
-                .weight(1f)
-        ) {
-            LazyColumn {
-                item {
-                    PokemonImage(
-                        pokemon = pokemon,
-                        image = image,
-                        imageHome = imageHome,
-                    )
-                    PokemonInfo(
-                        pokemon = pokemon,
-                        strings = strings,
-                        onClickBadge = onClickBadge,
-                    )
+        if (msg != null)
+            EmptyScreen(
+                msg = msg,
+                strings = strings,
+                image = image,
+                onClickAction = onClick,
+            )
+        else
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(color = Color(red = 255, green = 250, blue = 250))
+                    .weight(1f)
+            ) {
+                LazyColumn {
+                    item {
+                        PokemonImage(
+                            pokemon = pokemon,
+                            image = image,
+                            imageHome = imageHome,
+                        )
+                        PokemonInfo(
+                            pokemon = pokemon,
+                            strings = strings.details,
+                            onClickBadge = onClickBadge,
+                        )
+                    }
                 }
             }
-        }
     }
 
     @Composable
@@ -233,9 +248,11 @@ data class DetailScreen(val id: String) : Screen {
         imageHome: (String) -> String,
     ) {
         Column {
-            LazyRow(modifier =
-            Modifier.fillMaxWidth()
-                .background(color = pokemon.color)
+            LazyRow(
+                modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .background(color = pokemon.color)
             ) {
                 item {
                     AsyncImage(
