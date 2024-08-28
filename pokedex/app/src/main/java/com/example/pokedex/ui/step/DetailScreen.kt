@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -26,6 +27,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -72,6 +74,7 @@ data class DetailScreen(val id: String) : Screen {
                 pokemon = state.details,
                 strings = strings,
                 image = remember { { id -> screenModel.getImageURL(id) } },
+                imageHome = remember { { id -> screenModel.getImageHomeURL(id) } },
                 backAction = remember { { navigator.pop() } },
                 onClickBadge = remember { { id ->
                     screenModel.updateSelectedType(id, true)
@@ -87,6 +90,7 @@ data class DetailScreen(val id: String) : Screen {
         pokemon: PokemonDetail,
         strings: PokedexDetailStrings,
         image: (String) -> String,
+        imageHome: (String) -> String,
         backAction: () -> Unit,
         onClickBadge: (String) -> Unit
     ) {
@@ -107,6 +111,7 @@ data class DetailScreen(val id: String) : Screen {
                     PokemonImage(
                         pokemon = pokemon,
                         image = image,
+                        imageHome = imageHome,
                     )
                     PokemonInfo(
                         pokemon = pokemon,
@@ -225,22 +230,39 @@ data class DetailScreen(val id: String) : Screen {
     private fun PokemonImage(
         pokemon: PokemonDetail,
         image: (String) -> String,
+        imageHome: (String) -> String,
     ) {
         Column {
-            AsyncImage(
-                model = image(pokemon.id),
-                contentDescription = pokemon.name,
-                contentScale = ContentScale.FillBounds,
-                modifier = Modifier
-                    .background(color = pokemon.color)
-                    .height(350.dp)
-                    .fillMaxWidth()
-            )
+            LazyRow(modifier =
+            Modifier.fillMaxWidth()
+                .background(color = pokemon.color)
+            ) {
+                item {
+                    AsyncImage(
+                        model = image(pokemon.id),
+                        contentDescription = pokemon.name,
+                        contentScale = ContentScale.FillBounds,
+                        modifier = Modifier
+                            .background(color = pokemon.color)
+                            .height(350.dp)
+                            .width(300.dp)
+                    )
+                    AsyncImage(
+                        model = imageHome(pokemon.id),
+                        contentDescription = pokemon.name,
+                        contentScale = ContentScale.FillBounds,
+                        modifier = Modifier
+                            .background(color = pokemon.color)
+                            .height(250.dp)
+                            .width(300.dp)
+                    )
+                }
+            }
             Text(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(color = pokemon.color)
-                    .offset(y = (-35).dp),
+                    .offset(y = (-45).dp),
                 text = pokemon.number,
                 fontStyle = FontStyle.Normal,
                 fontFamily = FontFamily.SansSerif,
