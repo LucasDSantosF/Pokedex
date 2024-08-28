@@ -3,6 +3,7 @@ package com.example.pokedex.ui
 data class PokedexStrings(
     val list: PokedexListStrings = PokedexListStrings(),
     val details: PokedexDetailStrings = PokedexDetailStrings(),
+    val errorMsg: String = "Ops.. Algo de errado tente novamente",
 )
 
 data class PokedexListStrings(
