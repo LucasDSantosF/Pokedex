@@ -171,7 +171,7 @@ class PokedexFlowModel(
     fun getImageHomeURL(id: String) =
         "$IMAGE_HOME_URL$id.png"
 
-    private companion object {
+    companion object {
         const val IMAGE_URL =
             "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/"
         const val IMAGE_HOME_URL =

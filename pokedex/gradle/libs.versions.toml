@@ -14,6 +14,8 @@ serializationJsonVersion = "1.6.3"
 serializationConverterVersion = "1.0.0"
 voyagerVersion = "1.1.0-beta01"
 coilVersion = "2.7.0"
+mockkVersion = "1.13.8"
+turbineVersion = "1.1.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -36,10 +38,14 @@ kodein-android = { group = "org.kodein.di", name = "kodein-di-framework-android-
 retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofitVersion" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "serializationJsonVersion" }
 kotlinx-serialization-converter = { group = "com.jakewharton.retrofit", name = "retrofit2-kotlinx-serialization-converter", version.ref = "serializationConverterVersion" }
+kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "serializationConverterVersion" }
 voyager-navigator = { group = "cafe.adriel.voyager", name = "voyager-navigator", version.ref = "voyagerVersion" }
 voyager-screenmodel = { group = "cafe.adriel.voyager", name = "voyager-screenmodel", version.ref = "voyagerVersion" }
 voyager-kodein = { group = "cafe.adriel.voyager", name = "voyager-kodein", version.ref = "voyagerVersion" }
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coilVersion" }
+mockk = { group = "io.mockk", name = "mockk", version.ref = "mockkVersion" }
+flow-turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbineVersion" }
+
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
