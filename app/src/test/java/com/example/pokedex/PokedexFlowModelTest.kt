@@ -1,8 +1,12 @@
 package com.example.pokedex
 
+import androidx.arch.core.executor.testing.InstantTaskExecutorRule
+import androidx.lifecycle.asFlow
 import app.cash.turbine.test
 import com.example.pokedex.model.service.PokedexService
 import com.example.pokedex.ui.step.PokedexFlowModel
+import com.example.pokedex.ui.step.PokedexState
+import com.example.pokedex.ui.step.PokedexStateData
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.CoroutineDispatcher
@@ -36,6 +40,9 @@ class PokedexFlowModelTest {
     @get:Rule
     val coroutineTestRule = CoroutineTestRule(dispatcher)
 
+    @get:Rule
+    val instantTaskExecutorRule = InstantTaskExecutorRule()
+
     @Before
     fun setup() {
         service = FakePokedexService()
@@ -49,12 +56,15 @@ class PokedexFlowModelTest {
     fun `should return correct pokemon list`() = runTest(dispatcher) {
         flowModel.getList()
 
-        flowModel.state.test {
+        flowModel.state.asFlow().test {
             advanceUntilIdle()
 
-            val state = expectMostRecentItem()
+            when (val result = expectMostRecentItem()) {
+                is PokedexState.Result ->
+                    assertEquals(PokedexTestData.pokemonList().results, result.state.list)
 
-            assertEquals(PokedexTestData.pokemonList().results, state.list)
+                else -> assert(false)
+            }
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -63,40 +73,49 @@ class PokedexFlowModelTest {
     fun `should return correct pokemon type list`() = runTest(dispatcher) {
         flowModel.getList()
 
-        flowModel.state.test {
+        flowModel.state.asFlow().test {
             advanceUntilIdle()
 
-            val state = expectMostRecentItem()
+            when (val result = expectMostRecentItem()) {
+                is PokedexState.Result ->
+                    assertEquals(PokedexTestData.pokemonDetail().types, result.state.typeList)
 
-            assertEquals(PokedexTestData.pokemonDetail().types, state.typeList)
+                else -> assert(false)
+            }
             cancelAndIgnoreRemainingEvents()
         }
     }
 
     @Test
     fun `should return correct pokemon list by type`() = runTest(dispatcher) {
-        flowModel.getPokemonByType("some-id")
+        flowModel.getPokemonByType(stateData = PokedexStateData(), "some-id")
 
-        flowModel.state.test {
+        flowModel.state.asFlow().test {
             advanceUntilIdle()
 
-            val state = expectMostRecentItem()
+            when (val result = expectMostRecentItem()) {
+                is PokedexState.Result ->
+                    assertEquals(PokedexTestData.pokemonList().results, result.state.list)
 
-            assertEquals(PokedexTestData.pokemonList().results, state.list)
+                else -> assert(false)
+            }
             cancelAndIgnoreRemainingEvents()
         }
     }
 
     @Test
     fun `should return correct pokemon detail`() = runTest(dispatcher) {
-        flowModel.getDetail("some-id")
+        flowModel.getDetail(stateData = PokedexStateData(), "some-id")
 
-        flowModel.state.test {
+        flowModel.state.asFlow().test {
             advanceUntilIdle()
 
-            val state = expectMostRecentItem()
+            when (val result = expectMostRecentItem()) {
+                is PokedexState.Result ->
+                    assertEquals(PokedexTestData.pokemonDetail(), result.state.details)
 
-            assertEquals(PokedexTestData.pokemonDetail(), state.details)
+                else -> assert(false)
+            }
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -104,14 +123,17 @@ class PokedexFlowModelTest {
     @Test
     fun `should reload list if coming to detail to list and pokemon type selected`() =
         runTest(dispatcher) {
-            flowModel.updateSelectedType("3")
+            flowModel.updateSelectedType("3", stateData = PokedexStateData())
 
-            flowModel.state.test {
+            flowModel.state.asFlow().test {
                 advanceUntilIdle()
 
-                val state = expectMostRecentItem()
+                when (val result = expectMostRecentItem()) {
+                    is PokedexState.Result ->
+                        assertEquals("3", result.state.selectedType)
 
-                assertEquals("3", state.selectedType)
+                    else -> assert(false)
+                }
                 cancelAndIgnoreRemainingEvents()
             }
         }

@@ -20,10 +20,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Badge
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -32,6 +34,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,6 +50,7 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.kodein.rememberNavigatorScreenModel
+import cafe.adriel.voyager.kodein.rememberScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import coil.compose.AsyncImage
@@ -57,36 +61,43 @@ import com.example.pokedex.model.models.TypeColors
 import com.example.pokedex.ui.PokedexDetailStrings
 import com.example.pokedex.ui.PokedexStrings
 import com.example.pokedex.ui.step.components.EmptyScreen
+import com.example.pokedex.ui.step.components.LoadingContent
 
-data class DetailScreen(val id: String) : Screen {
+data class DetailScreen(val stateData: PokedexStateData, val id: String) : Screen {
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
-        val screenModel = navigator.rememberNavigatorScreenModel<PokedexFlowModel>()
-        val state by screenModel.state.collectAsState()
+        val screenModel = rememberScreenModel<PokedexFlowModel>()
+        val state by screenModel.state.observeAsState()
         val strings = remember { PokedexStrings() }
 
-        LaunchedEffect(key1 = screenModel) {
-            screenModel.getDetail(id)
+        when (val result = state) {
+            PokedexState.Loading -> LoadingContent()
+            is PokedexState.Result ->
+                Column {
+                    PokemonDetailBody(
+                        pokemon = result.state.details,
+                        strings = strings,
+                        msg = result.state.errorMsg,
+                        image = remember { { id -> screenModel.getImageURL(id) } },
+                        imageHome = remember { { id -> screenModel.getImageHomeURL(id) } },
+                        backAction = remember { { navigator.pop() } },
+                        onClickBadge = remember {
+                            { id ->
+                                screenModel.updateSelectedType(id, true, result.state)
+                                screenModel.getPokemonByType(result.state, id)
+                                navigator.pop()
+                            }
+                        },
+                        onClick = remember { { screenModel.reloadAction(result.state) } },
+                    )
+                }
+
+            else -> {}
         }
 
-        Column {
-            PokemonDetailBody(
-                pokemon = state.details,
-                strings = strings,
-                msg = state.errorMsg,
-                image = remember { { id -> screenModel.getImageURL(id) } },
-                imageHome = remember { { id -> screenModel.getImageHomeURL(id) } },
-                backAction = remember { { navigator.pop() } },
-                onClickBadge = remember {
-                    { id ->
-                        screenModel.updateSelectedType(id, true)
-                        screenModel.getPokemonByType(id)
-                        navigator.pop()
-                    }
-                },
-                onClick = remember { { screenModel.reloadAction() } },
-            )
+        LaunchedEffect(key1 = screenModel) {
+            screenModel.getDetail(stateData, id)
         }
     }
 
@@ -106,7 +117,7 @@ data class DetailScreen(val id: String) : Screen {
             backAction = backAction,
             backGroundColor = pokemon.color,
         )
-        HorizontalDivider(color = Color(red = 38, green = 0, blue = 65), thickness = 2.dp)
+        HorizontalDivider(color = MaterialTheme.colorScheme.tertiary, thickness = 2.dp)
         if (msg != null)
             EmptyScreen(
                 msg = msg,
@@ -118,7 +129,7 @@ data class DetailScreen(val id: String) : Screen {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(color = Color(red = 255, green = 250, blue = 250))
+                    .background(color = MaterialTheme.colorScheme.primary)
                     .weight(1f)
             ) {
                 LazyColumn {
@@ -143,6 +154,7 @@ data class DetailScreen(val id: String) : Screen {
         pokemon: PokemonDetail,
         strings: PokedexDetailStrings,
         onClickBadge: (String) -> Unit,
+        theme: ColorScheme = MaterialTheme.colorScheme,
     ) {
         Column {
             Spacer(modifier = Modifier.padding(10.dp))
@@ -158,7 +170,7 @@ data class DetailScreen(val id: String) : Screen {
                 fontFamily = FontFamily.SansSerif,
                 fontSize = TextUnit(value = 28f, type = TextUnitType.Sp),
                 fontWeight = FontWeight.ExtraBold,
-                color = Color(red = 38, green = 0, blue = 65),
+                color = theme.surface,
                 modifier = Modifier
                     .padding(horizontal = 20.dp)
                     .fillMaxWidth(),
@@ -167,7 +179,7 @@ data class DetailScreen(val id: String) : Screen {
                 pokemon.stats.forEachIndexed { index, stat ->
                     if (index != 0)
                         HorizontalDivider(
-                            color = Color(red = 38, green = 0, blue = 65),
+                            color = theme.surface,
                             thickness = 2.dp
                         )
                     PokemonStatsRow(stat = stat)
@@ -179,6 +191,7 @@ data class DetailScreen(val id: String) : Screen {
     @Composable
     private fun PokemonStatsRow(
         stat: PokemonStats,
+        theme: ColorScheme = MaterialTheme.colorScheme,
     ) {
         Row(
             modifier = Modifier
@@ -192,7 +205,7 @@ data class DetailScreen(val id: String) : Screen {
                 fontFamily = FontFamily.SansSerif,
                 fontSize = TextUnit(value = 24f, type = TextUnitType.Sp),
                 fontWeight = FontWeight.ExtraBold,
-                color = Color(red = 160, green = 160, blue = 160)
+                color = theme.secondary
             )
 
             Text(
@@ -202,7 +215,7 @@ data class DetailScreen(val id: String) : Screen {
                 fontSize = TextUnit(value = 24f, type = TextUnitType.Sp),
                 fontWeight = FontWeight.ExtraBold,
                 textAlign = TextAlign.End,
-                color = Color(red = 100, green = 100, blue = 100)
+                color = theme.surface
             )
         }
     }
@@ -212,6 +225,7 @@ data class DetailScreen(val id: String) : Screen {
         pokemon: PokemonDetail,
         strings: PokedexDetailStrings,
         onClickBadge: (String) -> Unit,
+        theme: ColorScheme = MaterialTheme.colorScheme,
     ) {
         Column {
             Text(
@@ -220,7 +234,7 @@ data class DetailScreen(val id: String) : Screen {
                 fontFamily = FontFamily.SansSerif,
                 fontSize = TextUnit(value = 28f, type = TextUnitType.Sp),
                 fontWeight = FontWeight.ExtraBold,
-                color = Color(red = 38, green = 0, blue = 65),
+                color = theme.surface,
                 modifier = Modifier
                     .padding(horizontal = 20.dp)
                     .fillMaxWidth(),
@@ -246,13 +260,14 @@ data class DetailScreen(val id: String) : Screen {
         pokemon: PokemonDetail,
         image: (String) -> String,
         imageHome: (String) -> String,
+        theme: ColorScheme = MaterialTheme.colorScheme,
     ) {
         Column {
             LazyRow(
                 modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .background(color = pokemon.color)
+                    Modifier
+                        .fillMaxWidth()
+                        .background(color = pokemon.color)
             ) {
                 item {
                     AsyncImage(
@@ -286,10 +301,10 @@ data class DetailScreen(val id: String) : Screen {
                 fontSize = TextUnit(value = 28f, type = TextUnitType.Sp),
                 fontWeight = FontWeight.ExtraBold,
                 textAlign = TextAlign.Center,
-                color = Color(red = 38, green = 0, blue = 65)
+                color = theme.tertiary
             )
             HorizontalDivider(
-                color = Color(red = 38, green = 0, blue = 65),
+                color = theme.surface,
                 thickness = 2.dp
             )
         }
@@ -325,6 +340,7 @@ data class DetailScreen(val id: String) : Screen {
         name: String,
         backAction: () -> Unit,
         backGroundColor: Color,
+        theme: ColorScheme = MaterialTheme.colorScheme,
     ) {
         TopAppBar(
             colors = TopAppBarDefaults.largeTopAppBarColors(
@@ -337,7 +353,7 @@ data class DetailScreen(val id: String) : Screen {
                     fontFamily = FontFamily.SansSerif,
                     fontSize = TextUnit(value = 28f, type = TextUnitType.Sp),
                     fontWeight = FontWeight.ExtraBold,
-                    color = Color(red = 38, green = 0, blue = 65),
+                    color = theme.tertiary,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -346,7 +362,7 @@ data class DetailScreen(val id: String) : Screen {
                 IconButton(onClick = { backAction() }) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        tint = Color(red = 38, green = 0, blue = 65),
+                        tint = theme.tertiary,
                         contentDescription = null,
                     )
                 }

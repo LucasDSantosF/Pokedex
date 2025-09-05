@@ -24,7 +24,9 @@ class MainActivity : ComponentActivity(), DIAware {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            Navigator(screen = ListScreen())
+            PokedexTheme {
+                Navigator(screen = ListScreen())
+            }
         }
     }
 }
