@@ -11,27 +11,29 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.Badge
 import androidx.compose.material3.Card
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,8 +46,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.kodein.rememberNavigatorScreenModel
+import cafe.adriel.voyager.kodein.rememberScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import coil.compose.AsyncImage
@@ -54,6 +57,7 @@ import com.example.pokedex.model.models.PokemonType
 import com.example.pokedex.ui.PokedexListStrings
 import com.example.pokedex.ui.PokedexStrings
 import com.example.pokedex.ui.step.components.EmptyScreen
+import com.example.pokedex.ui.step.components.LoadingContent
 import com.example.pokedex.ui.util.EndlessLazyColumn
 
 class ListScreen : Screen {
@@ -61,38 +65,57 @@ class ListScreen : Screen {
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
-        val screenModel = navigator.rememberNavigatorScreenModel<PokedexFlowModel>()
-        val state by screenModel.state.collectAsState()
+        val screenModel = rememberScreenModel<PokedexFlowModel>()
+        val state by screenModel.state.observeAsState()
         val strings = remember { PokedexStrings() }
+        val selectedType: MutableState<String?> = remember { mutableStateOf(null) }
+        val stateData: MutableState<PokedexStateData> = remember { mutableStateOf(PokedexStateData()) }
 
-        LaunchedEffect(key1 = screenModel) {
-            state.selectedType?.let { id ->
-                screenModel.getPokemonByType(id)
-            } ?: screenModel.getList()
+        when (val result = state) {
+            PokedexState.Loading -> LoadingContent()
+            is PokedexState.Result -> {
+                PokedexBody(
+                    state = result.state,
+                    strings = strings,
+                    image = remember { { id -> screenModel.getImageURL(id) } },
+                    onValueChange = remember {
+                        { inputText -> screenModel.updateInputText(result.state, inputText) }
+                    },
+                    onClickAction = remember {
+                        {
+                            screenModel.getPokemonByNameOrId(result.state.inputText, result.state)
+                        }
+                    },
+                    onClickBadge = remember {
+                        { id ->
+                            screenModel.updateSelectedType(id = id, stateData = result.state)
+                            screenModel.getPokemonByType(result.state, id)
+                        }
+                    },
+                    onClickToDetail = remember {
+                        { id -> navigator.push(DetailScreen(result.state, id)) }
+                    },
+                    loadMore = remember { { screenModel.loadMoreList(result.state) } },
+                    onClick = remember { { screenModel.reloadAction(result.state) } }
+                )
+                selectedType.value = result.state.selectedType
+                stateData.value = result.state
+            }
+
+            null -> {}
         }
 
-        PokedexBody(
-            state = state,
-            strings = strings,
-            image = remember { { id -> screenModel.getImageURL(id) } },
-            onValueChange = remember { { inputText -> screenModel.updateInputText(inputText) } },
-            onClickAction = remember { { screenModel.getPokemonByNameOrId() } },
-            onClickBadge = remember {
-                { id ->
-                    screenModel.updateSelectedType(id)
-                    screenModel.getPokemonByType(id)
-                }
-            },
-            onClickToDetail = remember { { id -> navigator.push(DetailScreen(id)) } },
-            loadMore = remember { { screenModel.loadMoreList() } },
-            onClick = remember { { screenModel.reloadAction() } }
-        )
+        LaunchedEffect(key1 = screenModel) {
+            selectedType.value?.let { id ->
+                screenModel.getPokemonByType(stateData.value, id)
+            } ?: screenModel.getList()
+        }
     }
 
 
     @Composable
     private fun PokedexBody(
-        state: PokedexState,
+        state: PokedexStateData,
         image: (String) -> String,
         strings: PokedexStrings,
         onClickAction: () -> Unit,
@@ -107,7 +130,7 @@ class ListScreen : Screen {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(color = Color(red = 255, green = 250, blue = 250))
+                .background(color = MaterialTheme.colorScheme.primary)
         ) {
             Header(strings.list)
             SearchInputAndTypesBadges(
@@ -118,6 +141,10 @@ class ListScreen : Screen {
                 onValueChange = onValueChange,
                 onClickAction = onClickAction,
                 onClickBadge = onClickBadge,
+            )
+            HorizontalDivider(
+                modifier = Modifier.padding(horizontal = 20.dp),
+                color = MaterialTheme.colorScheme.secondary,
             )
             if (msg != null)
                 EmptyScreen(
@@ -147,18 +174,24 @@ class ListScreen : Screen {
     private fun PokemonCard(
         pokemon: Pokemon,
         image: (String) -> String,
-        onClickToDetail: (String) -> Unit
+        onClickToDetail: (String) -> Unit,
+        theme: ColorScheme = MaterialTheme.colorScheme,
     ) {
         Column(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Card(
-                modifier = Modifier
-                    .padding(20.dp)
+                modifier = Modifier.fillMaxWidth()
+                    .padding(vertical = 20.dp, horizontal =40.dp)
                     .clickable { onClickToDetail(pokemon.id) }
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Column(
+                    Modifier.fillMaxWidth()
+                        .background(color = theme.surface)
+                        .padding(8.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
                     AsyncImage(
                         model = image(pokemon.id),
                         contentDescription = pokemon.name,
@@ -172,9 +205,9 @@ class ListScreen : Screen {
                         text = pokemon.name,
                         fontStyle = FontStyle.Normal,
                         fontFamily = FontFamily.SansSerif,
-                        fontSize = TextUnit(value = 20f, type = TextUnitType.Sp),
+                        fontSize = TextUnit(value = 20.sp.value, type = TextUnitType.Sp),
                         fontWeight = FontWeight.ExtraBold,
-                        color = Color(red = 38, green = 0, blue = 65)
+                        color = theme.tertiary
                     )
                 }
             }
@@ -221,18 +254,25 @@ class ListScreen : Screen {
         strings: PokedexListStrings,
         onClickAction: () -> Unit,
         onValueChange: (String) -> Unit,
+        theme: ColorScheme = MaterialTheme.colorScheme,
     ) {
         TextField(
             modifier = Modifier
+                .border(
+                    color = theme.primary,
+                    width = 1.dp,
+                    shape = RoundedCornerShape(8.dp),
+                )
                 .padding(horizontal = 20.dp)
                 .fillMaxWidth(),
             value = inputText,
+            shape = RoundedCornerShape(8.dp),
             onValueChange = onValueChange,
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Outlined.Search,
                     contentDescription = null,
-                    tint = Color(red = 38, green = 0, blue = 65),
+                    tint = theme.tertiary,
                 )
             },
             keyboardActions = KeyboardActions(
@@ -243,15 +283,25 @@ class ListScreen : Screen {
                     text = strings.placeholder,
                     fontStyle = FontStyle.Normal,
                     fontFamily = FontFamily.SansSerif,
-                    fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
+                    fontSize = TextUnit(value = 16.sp.value, type = TextUnitType.Sp),
                     fontWeight = FontWeight.ExtraBold,
-                    color = Color(red = 160, green = 160, blue = 160)
+                    color = theme.tertiary
                 )
             },
-            colors = TextFieldDefaults.textFieldColors(
-                containerColor = Color(red = 240, green = 240, blue = 240),
-                focusedIndicatorColor = Color(red = 240, green = 240, blue = 240),
-                unfocusedIndicatorColor = Color(red = 240, green = 240, blue = 240),
+            textStyle =
+                LocalTextStyle.current.copy(
+                    color = theme.tertiary,
+                    fontStyle = FontStyle.Normal,
+                    fontFamily = FontFamily.SansSerif,
+                    fontSize = TextUnit(value = 20.sp.value, type = TextUnitType.Sp),
+                    fontWeight = FontWeight.ExtraBold,
+                ),
+            colors = TextFieldDefaults.colors().copy(
+                focusedContainerColor = theme.surface,
+                unfocusedContainerColor = theme.surface,
+                cursorColor = theme.primary,
+                focusedIndicatorColor = theme.surface,
+                unfocusedIndicatorColor = theme.surface,
             ),
             singleLine = true,
         )
@@ -263,6 +313,8 @@ class ListScreen : Screen {
         selectedType: String?,
         onClickBadge: (String) -> Unit
     ) {
+        val color = MaterialTheme.colorScheme.secondary
+
         Badge(
             Modifier
                 .padding(vertical = 16.dp, horizontal = 12.dp)
@@ -272,7 +324,7 @@ class ListScreen : Screen {
                     border(
                         border = BorderStroke(
                             width = 2.dp,
-                            color = Color(red = 38, green = 0, blue = 65)
+                            color = color,
                         ),
                         shape = RoundedCornerShape(124.dp)
                     )
@@ -285,7 +337,7 @@ class ListScreen : Screen {
                     text = type.name,
                     fontStyle = FontStyle.Normal,
                     fontFamily = FontFamily.SansSerif,
-                    fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
+                    fontSize = TextUnit(value = 16.sp.value, type = TextUnitType.Sp),
                     fontWeight = FontWeight.ExtraBold,
                     color = Color.White
                 )
@@ -294,24 +346,27 @@ class ListScreen : Screen {
     }
 
     @Composable
-    private fun Header(strings: PokedexListStrings) {
+    private fun Header(
+        strings: PokedexListStrings,
+        theme: ColorScheme = MaterialTheme.colorScheme
+    ) {
         Column(Modifier.padding(20.dp)) {
             Text(
                 text = strings.title,
                 fontStyle = FontStyle.Normal,
                 fontFamily = FontFamily.SansSerif,
-                fontSize = TextUnit(value = 40f, type = TextUnitType.Sp),
+                fontSize = TextUnit(value = 40.sp.value, type = TextUnitType.Sp),
                 fontWeight = FontWeight.ExtraBold,
-                color = Color(red = 38, green = 0, blue = 65)
+                color = theme.surface
             )
 
             Text(
                 text = strings.description,
                 fontStyle = FontStyle.Normal,
                 fontFamily = FontFamily.SansSerif,
-                fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
+                fontSize = TextUnit(value = 16.sp.value, type = TextUnitType.Sp),
                 fontWeight = FontWeight.ExtraBold,
-                color = Color(red = 160, green = 160, blue = 160)
+                color = theme.secondary
             )
         }
     }
