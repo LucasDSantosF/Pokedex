@@ -10,9 +10,9 @@ import com.example.pokedex.model.service.PokedexService
 class PokedexInfrastructure(
     private val gateway: Gateway,
 ) : PokedexService {
-    override suspend fun getPokemonList(limit: Int): PokemonList {
+    override suspend fun getPokemonList(limit: Int): List<Pokemon> {
         val response = gateway.getPokemonList(limit)
-        return response.toDomain()
+        return response.toDomain().results
     }
 
     override suspend fun getPokemon(name: String): PokemonDetail {

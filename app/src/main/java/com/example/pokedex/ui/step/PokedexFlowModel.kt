@@ -13,19 +13,20 @@ class PokedexFlowModel(
 ) : LiveScreenModel<PokedexState>(PokedexState.Loading) {
     private val strings = PokedexStrings()
 
-    fun getList() {
+    fun getList(preSelectedId: String? = null) {
         screenModelScope.launch {
             runCatching {
-                service.getPokemonList() to service.getPokemonTypeList()
+                getPokemonList(preSelectedId) to service.getPokemonTypeList()
             }.onSuccess { result ->
                 val (pokemonList, typeList) = result
 
                 mutableState.postValue(
                     PokedexState.Result(
                         PokedexStateData(
-                            list = pokemonList.results,
+                            list = pokemonList,
                             typeList = typeList,
                             errorMsg = null,
+                            selectedType = preSelectedId
                         )
                     )
                 )
@@ -41,6 +42,11 @@ class PokedexFlowModel(
             }
         }
     }
+
+    private suspend fun getPokemonList(preSelectedId: String? = null) : List<Pokemon> =
+        if (preSelectedId != null)
+            service.getPokemonListByType(preSelectedId)
+        else service.getPokemonList()
 
     fun getPokemonByNameOrId(
         inputText: String,
@@ -76,7 +82,10 @@ class PokedexFlowModel(
         mutableState.value = PokedexState.Result(stateData.copy(inputText = inputText))
     }
 
-    fun getPokemonByType(stateData: PokedexStateData, id: String) {
+    fun getPokemonByType(
+        stateData: PokedexStateData,
+        id: String,
+    ) {
         screenModelScope.launch {
             runCatching {
                 service.getPokemonListByType(id)
@@ -85,7 +94,8 @@ class PokedexFlowModel(
                     PokedexState.Result(
                         stateData.copy(selectedType = id, list = result, errorMsg = null)
                     )
-            }.onFailure {
+            }.onFailure { exception ->
+                print(exception)
                 mutableState.value = PokedexState.Result(
                     stateData.copy(
                         errorMsg = strings.errorMsg,
@@ -123,15 +133,15 @@ class PokedexFlowModel(
     }
 
     fun updateSelectedType(
-        id: String?,
+        id: String,
+        preSelectedType: String?,
         comingToDetail: Boolean = false,
         stateData: PokedexStateData,
     ) {
-        if (!comingToDetail && stateData.selectedType == id) {
-            mutableState.value = PokedexState.Result(stateData.copy(selectedType = null))
+        if (!comingToDetail && preSelectedType == id) {
+            mutableState.value = PokedexState.Result(PokedexStateData())
             getList()
-        } else
-            mutableState.value = PokedexState.Result(stateData.copy(selectedType = id))
+        } else getPokemonByType(stateData, id)
     }
 
     fun loadMoreList(stateData: PokedexStateData) {
@@ -144,7 +154,7 @@ class PokedexFlowModel(
 
                 mutableState.value = PokedexState.Result(
                     stateData.copy(
-                        list = pokemonList.results,
+                        list = pokemonList,
                         typeList = typeList,
                         limit = limit,
                         errorMsg = null,
@@ -181,10 +191,10 @@ class PokedexFlowModel(
     }
 
     fun getImageURL(id: String) =
-        "$IMAGE_URL$id.png"
+        "$IMAGE_HOME_URL$id.png"
 
     fun getImageHomeURL(id: String) =
-        "$IMAGE_HOME_URL$id.png"
+        "$IMAGE_URL$id.png"
 
     companion object {
         const val IMAGE_URL =
