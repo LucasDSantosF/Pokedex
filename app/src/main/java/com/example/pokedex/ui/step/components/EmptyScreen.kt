@@ -61,7 +61,7 @@ fun EmptyScreen(
             fontSize = TextUnit(value = 20f, type = TextUnitType.Sp),
             fontWeight = FontWeight.ExtraBold,
             textAlign = TextAlign.Center,
-            color = theme.tertiary.takeIf { isSystemInDarkTheme() } ?: theme.surface
+            color = theme.secondary
         )
         TextButton(
             modifier = Modifier.fillMaxWidth(),
@@ -78,7 +78,7 @@ fun EmptyScreen(
                 fontFamily = FontFamily.SansSerif,
                 fontSize = TextUnit(value = 20f, type = TextUnitType.Sp),
                 fontWeight = FontWeight.ExtraBold,
-                color = theme.surface.takeIf { isSystemInDarkTheme() } ?: theme.tertiary
+                color = theme.primary
             )
         }
     }

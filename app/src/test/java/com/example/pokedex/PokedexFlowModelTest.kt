@@ -123,7 +123,7 @@ class PokedexFlowModelTest {
     @Test
     fun `should reload list if coming to detail to list and pokemon type selected`() =
         runTest(dispatcher) {
-            flowModel.updateSelectedType("3", stateData = PokedexStateData())
+            flowModel.updateSelectedType("3", stateData = PokedexStateData(), preSelectedType = null)
 
             flowModel.state.asFlow().test {
                 advanceUntilIdle()

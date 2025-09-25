@@ -6,7 +6,7 @@ import com.example.pokedex.model.models.PokemonList
 import com.example.pokedex.model.models.PokemonType
 
 interface PokedexService {
-    suspend fun getPokemonList(limit: Int = 20): PokemonList
+    suspend fun getPokemonList(limit: Int = 20): List<Pokemon>
     suspend fun getPokemon(name: String): PokemonDetail
     suspend fun getPokemonTypeList(): List<PokemonType>
     suspend fun getPokemonListByType(id: String): List<Pokemon>

@@ -17,8 +17,8 @@ class FakePokedexService : PokedexService {
     var pokemonTypeResult: List<PokemonType> = pokemonDetail().types
     var pokemonListByTypeResult: List<Pokemon> = pokemonList().results
 
-    override suspend fun getPokemonList(limit: Int): PokemonList =
-        pokemonListResult
+    override suspend fun getPokemonList(limit: Int): List<Pokemon> =
+        pokemonListResult.results
 
     override suspend fun getPokemon(name: String): PokemonDetail =
         pokemonDetailResult
