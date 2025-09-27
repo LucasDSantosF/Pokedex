@@ -43,29 +43,25 @@ class ListScreen(private val preSelectedId: String? = null) : Screen {
                 PokedexBody(
                     state = result.state,
                     strings = strings,
-                    image = remember { { id -> screenModel.getImageURL(id) } },
-                    onValueChange = remember {
-                        { inputText -> screenModel.updateInputText(result.state, inputText) }
+                    image = { id -> screenModel.getImageURL(id) },
+                    onValueChange = { inputText ->
+                        screenModel.updateInputText(result.state, inputText)
                     },
-                    onClickAction = remember {
-                        { inputText ->
-                            screenModel.getPokemonByNameOrId(inputText, result.state)
-                        }
+                    onClickAction = { inputText ->
+                        screenModel.getPokemonByNameOrId(inputText, result.state)
                     },
-                    onClickBadge = remember {
-                        { preSelected, id ->
-                            screenModel.updateSelectedType(
-                                id = id,
-                                preSelectedType = preSelected,
-                                stateData = result.state
-                            )
-                        }
+                    onClickBadge = { preSelected, id ->
+                        screenModel.updateSelectedType(
+                            id = id,
+                            preSelectedType = preSelected,
+                            stateData = result.state
+                        )
                     },
-                    onClickToDetail = remember {
-                        { id -> navigator.replaceAll(DetailScreen(result.state, id)) }
+                    onClickToDetail = { id ->
+                        navigator.replaceAll(DetailScreen(result.state, id))
                     },
-                    loadMore = remember { { screenModel.loadMoreList(result.state) } },
-                    onClick = remember { { screenModel.reloadAction(result.state) } }
+                    loadMore = { screenModel.loadMoreList(result.state) },
+                    onClick = { screenModel.reloadAction(result.state) }
                 )
 
             null -> {}

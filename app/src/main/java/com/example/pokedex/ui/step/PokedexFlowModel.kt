@@ -79,7 +79,9 @@ class PokedexFlowModel(
     }
 
     fun updateInputText(stateData: PokedexStateData, inputText: String) {
-        mutableState.value = PokedexState.Result(stateData.copy(inputText = inputText))
+        mutableState.value = PokedexState.Result(
+            stateData.copy(inputText = inputText)
+        )
     }
 
     fun getPokemonByType(
