@@ -19,6 +19,8 @@ A **Injeção de Dependência** foi implementada com a biblioteca **Kodein**.
 
 Para criação da **ViewModel** e facilitar a **Navegação** foi implementada a biblioteca **voyager**.
 
+Implemetação de ***Workflow do GIthub Actions*** para verificar se os testes estão em funcionamento correto antes do Pull Request ser Merged.
+
 Na criação de **testes unitarios**, as bibliotecas **Coroutines Test** manipular dispatcher e testar funções de suspensas, 
 **Mockk** para criar objetos simulados (mocks) para substituir dependências reais, 
 **Junit** para fornecer anotações e asserções para definir e executar os testes,
