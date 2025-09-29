@@ -6,6 +6,10 @@
 
 Totalmente desenvolvido em **Jetpack Compose**.
 
+https://github.com/user-attachments/assets/6ec88163-1572-4430-85f6-157bfbff45b4
+
+https://github.com/user-attachments/assets/0a5cfa82-15f5-4313-89ca-8390035fb704
+
 <img width="260" height="520" src="https://github.com/user-attachments/assets/6cd8d926-7197-4a14-912d-c9e9726e6603" />
 <img width="260" height="520" src="https://github.com/user-attachments/assets/f15fd8de-e19c-4386-b10d-c99969bc9e98" />
 
