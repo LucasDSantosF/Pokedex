@@ -44,12 +44,12 @@ fun PokemonStatsRow(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = formattedName(stat.stat.name),
+                text = formattedName(stat.stat.name).uppercase(),
                 fontStyle = FontStyle.Normal,
                 fontFamily = FontFamily.SansSerif,
                 fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
                 fontWeight = FontWeight.ExtraBold,
-                color = theme.secondary
+                color = theme.secondary.takeIf { isSystemInDarkTheme() } ?: theme.surface
             )
             Text(
                 text = stat.baseStat,

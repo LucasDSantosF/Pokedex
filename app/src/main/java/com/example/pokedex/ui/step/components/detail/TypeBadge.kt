@@ -4,6 +4,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Badge
+import androidx.compose.material3.ColorScheme
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -19,6 +21,7 @@ import com.example.pokedex.model.models.PokemonType
 
 @Composable
 fun TypeBadge(
+    theme: ColorScheme = MaterialTheme.colorScheme,
     type: PokemonType,
     onClickBadge: (String) -> Unit
 ) {
@@ -36,7 +39,7 @@ fun TypeBadge(
                 fontFamily = FontFamily.SansSerif,
                 fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
                 fontWeight = FontWeight.ExtraBold,
-                color = Color.White
+                color = theme.primary
             )
         })
 }
