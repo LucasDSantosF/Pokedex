@@ -1,5 +1,6 @@
 package com.example.pokedex.ui.step.components.detail
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -46,7 +47,7 @@ fun PokemonInfo(
             fontFamily = FontFamily.SansSerif,
             fontSize = TextUnit(value = 26f, type = TextUnitType.Sp),
             fontWeight = FontWeight.ExtraBold,
-            color = theme.secondary,
+            color = theme.secondary.takeIf { isSystemInDarkTheme() } ?: theme.surface,
             modifier = Modifier
                 .padding(horizontal = 20.dp)
                 .fillMaxWidth(),

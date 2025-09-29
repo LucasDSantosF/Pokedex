@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CardElevation
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -40,7 +42,7 @@ fun PokemonCard(
     ) {
         Card(
             modifier = Modifier.fillMaxWidth()
-                .padding(vertical = 20.dp, horizontal = 40.dp)
+                .padding(vertical = 20.dp, horizontal = 60.dp)
                 .clickable { onClickToDetail(pokemon.id) }
         ) {
             Column(
@@ -56,7 +58,7 @@ fun PokemonCard(
                     fontFamily = FontFamily.SansSerif,
                     fontSize = TextUnit(value = 20.sp.value, type = TextUnitType.Sp),
                     fontWeight = FontWeight.ExtraBold,
-                    color = theme.tertiary.takeIf { isSystemInDarkTheme() } ?: theme.primary
+                    color = theme.primary
                 )
                 AsyncImage(
                     model = image(pokemon.id),

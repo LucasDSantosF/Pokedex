@@ -11,7 +11,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -28,7 +27,7 @@ fun TypeBadge(
     selectedType: String?,
     onClickBadge: ( String?, String) -> Unit
 ) {
-    val color = MaterialTheme.colorScheme.secondary
+    val color = MaterialTheme.colorScheme.surface
 
     Badge(
         Modifier
@@ -54,7 +53,7 @@ fun TypeBadge(
                 fontFamily = FontFamily.SansSerif,
                 fontSize = TextUnit(value = 16.sp.value, type = TextUnitType.Sp),
                 fontWeight = FontWeight.ExtraBold,
-                color = Color.White
+                color = MaterialTheme.colorScheme.primary
             )
         }
     )
