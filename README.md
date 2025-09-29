@@ -6,12 +6,12 @@
 
 Totalmente desenvolvido em **Jetpack Compose**.
 
-https://github.com/user-attachments/assets/6ec88163-1572-4430-85f6-157bfbff45b4
+https://github.com/user-attachments/assets/23bfecea-ae93-4331-a649-f17c27c8f6ec
 
-https://github.com/user-attachments/assets/0a5cfa82-15f5-4313-89ca-8390035fb704
+https://github.com/user-attachments/assets/27bc06d0-1169-4e50-a99f-bf6aca6ba65c
 
-<img width="260" height="520" src="https://github.com/user-attachments/assets/6cd8d926-7197-4a14-912d-c9e9726e6603" />
-<img width="260" height="520" src="https://github.com/user-attachments/assets/f15fd8de-e19c-4386-b10d-c99969bc9e98" />
+<img width="260" height="520" src="https://github.com/user-attachments/assets/20ad2717-b458-489b-b2bf-4a8704456cc8" />
+<img width="260" height="520" src="https://github.com/user-attachments/assets/85c86d3c-ebf3-4396-8a39-caca497b35a9" />
 
 ## Estrutura e Decisões Técnicas
 
